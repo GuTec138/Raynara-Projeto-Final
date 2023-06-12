@@ -1,0 +1,75 @@
+---
+title: "ProjetoRaynara"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(tidyquant)
+library(DT)
+
+prices <- read.csv("C:/Users/gusta/OneDrive/Documentos/RaynaraProjeto1/prices.csv")
+```
+
+column {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+selectInput(
+  "acao", label = "Escolha sua ação:",
+  choices = c("TOTS3.SA","ASAI3.SA","VALE3.SA","PETR4.SA","PETR3.SA")
+)
+
+dados_tbl <- reactive({
+  req(input$acao)
+  tq_get(input$acao)
+})
+
+
+
+```
+Column {data-width=500}
+-----------------------------------------------------------------------
+### Tendências
+```{r}
+ renderPlotly({
+   req(dados_tbl())  # Verifica se dados_tbl() não é vazio
+   dados_tbl() |>
+     ggplot(aes(x= date, y= adjusted)) +
+     geom_line()
+ })
+```
+
+### Todas as Tendências
+ 
+```{r}
+renderPlotly({
+   req(dados_tbl())  # Verifica se dados_tbl() não é vazio
+   dados_tbl() |>
+     ggplot(aes(x= date, y= adjusted, color = symbol)) +
+     geom_line(size= 1.1) +
+     labs(x= "", y= "Cotação", color= "Ação") +
+     theme(panel.background = element_blank())
+ })
+```
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Cotações
+
+```{r}
+renderDataTable({
+  req(dados_tbl())  # Verifica se dados_tbl() não é vazio
+  
+  dados_tbl() |>
+  select(date, adjusted) |>
+  arrange(desc(date))
+})
+
+```
